@@ -29,12 +29,9 @@ db.sqlite3-journal
 docker-compose.override.yml
 
 # Environment Variables
-.env
-.env.local
 .env.*.local
 
 # IDE
-.vscode/
 .idea/
 *.swp
 *.swo
@@ -53,3 +50,5 @@ htmlcov/
 
 # Local settings
 local_settings.py
+config.bat
+node_modules
