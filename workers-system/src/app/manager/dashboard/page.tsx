@@ -156,8 +156,10 @@ export default async function ManagerDashboardPage() {
                                                 <td className="whitespace-nowrap px-6 py-4 text-sm text-pink-500 font-mono">{claim.taskExternalId}</td>
                                                 <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-300">{claim.timeSpentHours.toString()}</td>
                                                 <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-300">
-                                                    {claim.screenshot ? (
-                                                        <div className="h-10 w-10 bg-gray-700 rounded flex items-center justify-center text-xs">Img</div>
+                                                    {claim.screenshot && claim.screenshot !== "no-screenshot.png" ? (
+                                                        <a href={claim.screenshot} target="_blank" rel="noopener noreferrer" className="h-10 w-10 bg-blue-700 rounded flex items-center justify-center text-xs hover:bg-blue-600 cursor-pointer">
+                                                            View
+                                                        </a>
                                                     ) : (
                                                         <span className="text-gray-500">No Image</span>
                                                     )}

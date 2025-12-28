@@ -6,6 +6,7 @@ import { authOptions } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
+import { uploadToS3 } from "@/lib/s3";
 
 export async function submitClaim(formData: FormData) {
     const session = await getServerSession(authOptions);
@@ -26,14 +27,11 @@ export async function submitClaim(formData: FormData) {
     // Handle file upload if provided
     if (screenshotFile && screenshotFile.size > 0) {
         try {
-            // Convert file to base64 for storage
-            const bytes = await screenshotFile.arrayBuffer();
-            const buffer = Buffer.from(bytes);
-            const base64 = buffer.toString('base64');
-            screenshotPath = `data:${screenshotFile.type};base64,${base64}`;
+            // Upload to S3 instead of base64
+            screenshotPath = await uploadToS3(screenshotFile, "claims-screenshots");
         } catch (fileError) {
-            console.error("Error processing file:", fileError);
-            // Continue with default if file processing fails
+            console.error("Error uploading file:", fileError);
+            // Continue with default if file upload fails
         }
     }
 
@@ -397,12 +395,9 @@ export async function acceptAccountWithEarnings(formData: FormData) {
     let proofPath = "";
     if (proofFile && proofFile.size > 0) {
         try {
-            const bytes = await proofFile.arrayBuffer();
-            const buffer = Buffer.from(bytes);
-            const base64 = buffer.toString('base64');
-            proofPath = `data:${proofFile.type};base64,${base64}`;
+            proofPath = await uploadToS3(proofFile, "earnings-proofs/initial");
         } catch (error) {
-            return { success: false, error: "Failed to process screenshot" };
+            return { success: false, error: "Failed to upload screenshot" };
         }
     }
 
@@ -461,12 +456,9 @@ export async function leaveAccountWithEarnings(formData: FormData) {
     let proofPath = "";
     if (proofFile && proofFile.size > 0) {
         try {
-            const bytes = await proofFile.arrayBuffer();
-            const buffer = Buffer.from(bytes);
-            const base64 = buffer.toString('base64');
-            proofPath = `data:${proofFile.type};base64,${base64}`;
+            proofPath = await uploadToS3(proofFile, "earnings-proofs/final");
         } catch (error) {
-            return { success: false, error: "Failed to process screenshot" };
+            return { success: false, error: "Failed to upload screenshot" };
         }
     }
 
