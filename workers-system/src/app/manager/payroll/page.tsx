@@ -5,6 +5,9 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import EarningsProofViewer from "@/components/EarningsProofViewer";
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function PayrollPage() {
     const session = await getServerSession(authOptions);
     // @ts-ignore

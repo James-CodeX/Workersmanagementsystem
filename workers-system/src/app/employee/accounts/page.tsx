@@ -4,6 +4,9 @@ import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import AccountActionButtons from "@/components/AccountActionButtons";
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function EmployeeAccountsPage() {
     const session = await getServerSession(authOptions);
 

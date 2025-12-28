@@ -37,6 +37,10 @@ model TaskClaim {
   isPaid         Boolean  @default(false)
   submittedAt    DateTime @default(now())
   managerNotes   String?
+
+  @@index([status])
+  @@index([employeeId])
+  @@index([submittedAt])
 }
 
 enum ClaimStatus {
@@ -67,6 +71,10 @@ model WorkAccount {
   
   isPaid                Boolean  @default(false)
   paidAt                DateTime?
+
+  @@index([employeeId])
+  @@index([status])
+  @@index([assignedAt])
 }
 
 enum AccountStatus {

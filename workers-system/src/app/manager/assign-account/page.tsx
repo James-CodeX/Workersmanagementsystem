@@ -3,6 +3,9 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function AssignAccountPage() {
     const [employees, unassignedAccounts] = await Promise.all([
         prisma.user.findMany({
