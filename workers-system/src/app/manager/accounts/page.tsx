@@ -5,6 +5,9 @@ import { redirect } from "next/navigation";
 import AccountRow from "@/components/AccountRow";
 import UnassignAllButton from "@/components/UnassignAllButton";
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function ManageAccountsPage() {
     const [accounts, employees] = await Promise.all([
         prisma.workAccount.findMany({

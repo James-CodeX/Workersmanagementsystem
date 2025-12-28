@@ -3,6 +3,9 @@ import ClaimActionButtons from "@/components/ClaimActionButtons";
 import Link from "next/link";
 import HistoryDropdown from "@/components/HistoryDropdown";
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function ManagerDashboardPage() {
     // Fetch all data in parallel
     const [pendingClaims, allEmployees, allAccounts, pausedAccounts, leftAccounts] = await Promise.all([

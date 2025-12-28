@@ -6,6 +6,9 @@ import Link from "next/link";
 import { createEmployee } from "@/app/actions";
 import DeleteEmployeeButton from "@/components/DeleteEmployeeButton";
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function ManageEmployeesPage() {
     const session = await getServerSession(authOptions);
     // @ts-ignore
