@@ -9,13 +9,26 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export default async function ManageAccountsPage() {
+    // Optimize queries - limit to recent accounts and only fetch needed fields
     const [accounts, employees] = await Promise.all([
         prisma.workAccount.findMany({
-            include: { employee: true },
+            include: { 
+                employee: {
+                    select: {
+                        id: true,
+                        username: true
+                    }
+                }
+            },
             orderBy: { assignedAt: "desc" },
+            take: 100, // Limit to 100 most recent accounts
         }),
         prisma.user.findMany({
             where: { role: "EMPLOYEE" },
+            select: {
+                id: true,
+                username: true
+            },
             orderBy: { username: "asc" },
         }),
     ]);
@@ -27,6 +40,15 @@ export default async function ManageAccountsPage() {
     }
 
     const assignedCount = accounts.filter(a => a.employeeId !== null).length;
+    
+    // Pre-calculate statistics for better performance
+    const stats = {
+        total: accounts.length,
+        active: accounts.filter(a => a.status === "Accepted").length,
+        paused: accounts.filter(a => a.status === "Paused").length,
+        left: accounts.filter(a => a.status === "Left").length,
+        unassigned: accounts.filter(a => !a.employeeId).length
+    };
 
     return (
         <div className="space-y-6">
@@ -152,23 +174,23 @@ export default async function ManageAccountsPage() {
             {/* Statistics */}
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                 <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
-                    <div className="text-2xl font-bold text-white">{accounts.length}</div>
-                    <div className="text-xs text-gray-400">Total Accounts</div>
+                    <div className="text-2xl font-bold text-white">{stats.total}</div>
+                    <div className="text-xs text-gray-400">Total Accounts{stats.total >= 100 ? ' (showing 100)' : ''}</div>
                 </div>
                 <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
-                    <div className="text-2xl font-bold text-green-500">{accounts.filter(a => a.status === "Accepted").length}</div>
+                    <div className="text-2xl font-bold text-green-500">{stats.active}</div>
                     <div className="text-xs text-gray-400">Active</div>
                 </div>
                 <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
-                    <div className="text-2xl font-bold text-yellow-500">{accounts.filter(a => a.status === "Paused").length}</div>
+                    <div className="text-2xl font-bold text-yellow-500">{stats.paused}</div>
                     <div className="text-xs text-gray-400">Paused</div>
                 </div>
                 <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
-                    <div className="text-2xl font-bold text-red-500">{accounts.filter(a => a.status === "Left").length}</div>
+                    <div className="text-2xl font-bold text-red-500">{stats.left}</div>
                     <div className="text-xs text-gray-400">Left</div>
                 </div>
                 <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
-                    <div className="text-2xl font-bold text-gray-500">{accounts.filter(a => !a.employeeId).length}</div>
+                    <div className="text-2xl font-bold text-gray-500">{stats.unassigned}</div>
                     <div className="text-xs text-gray-400">Unassigned</div>
                 </div>
             </div>
