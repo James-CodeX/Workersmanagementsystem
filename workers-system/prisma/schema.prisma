@@ -57,6 +57,8 @@ model WorkAccount {
   email            String
   password         String
   browserType      String
+  accountType      AccountType @default(Outlier)
+  notes            String?  @db.Text
   status           AccountStatus @default(Assigned)
   recentlyUnpaused Boolean  @default(false)
   assignedAt       DateTime @default(now())
@@ -75,6 +77,11 @@ model WorkAccount {
   @@index([employeeId])
   @@index([status])
   @@index([assignedAt])
+}
+
+enum AccountType {
+  Outlier
+  Handshake
 }
 
 enum AccountStatus {

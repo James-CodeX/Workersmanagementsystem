@@ -68,69 +68,99 @@ export default async function ManageAccountsPage() {
             {/* Create New Account Form */}
             <div className="rounded-lg bg-gray-800 p-6 shadow-lg border border-gray-700">
                 <h3 className="text-lg font-bold text-white mb-4">Create New Account</h3>
-                <form action={createAccountAction} className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <form action={createAccountAction} className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                        <div>
+                            <label htmlFor="accountName" className="block text-xs font-medium text-gray-300 mb-1">
+                                Account Name *
+                            </label>
+                            <input
+                                type="text"
+                                name="accountName"
+                                id="accountName"
+                                required
+                                placeholder="e.g., John Doe"
+                                className="block w-full rounded-md border-gray-600 bg-gray-700 text-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2"
+                            />
+                        </div>
+
+                        <div>
+                            <label htmlFor="email" className="block text-xs font-medium text-gray-300 mb-1">
+                                Email *
+                            </label>
+                            <input
+                                type="email"
+                                name="email"
+                                id="email"
+                                required
+                                placeholder="email@example.com"
+                                className="block w-full rounded-md border-gray-600 bg-gray-700 text-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2"
+                            />
+                        </div>
+
+                        <div>
+                            <label htmlFor="password" className="block text-xs font-medium text-gray-300 mb-1">
+                                Password *
+                            </label>
+                            <input
+                                type="text"
+                                name="password"
+                                id="password"
+                                required
+                                placeholder="Account password"
+                                className="block w-full rounded-md border-gray-600 bg-gray-700 text-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2"
+                            />
+                        </div>
+
+                        <div>
+                            <label htmlFor="browserType" className="block text-xs font-medium text-gray-300 mb-1">
+                                Browser Type *
+                            </label>
+                            <select
+                                name="browserType"
+                                id="browserType"
+                                required
+                                className="block w-full rounded-md border-gray-600 bg-gray-700 text-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2"
+                            >
+                                <option value="IX Browser">IX Browser</option>
+                                <option value="GoLogin">GoLogin</option>
+                                <option value="More Login">More Login</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label htmlFor="accountType" className="block text-xs font-medium text-gray-300 mb-1">
+                                Account Type *
+                            </label>
+                            <select
+                                name="accountType"
+                                id="accountType"
+                                required
+                                className="block w-full rounded-md border-gray-600 bg-gray-700 text-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2"
+                            >
+                                <option value="Outlier">Outlier</option>
+                                <option value="Handshake">Handshake</option>
+                            </select>
+                        </div>
+                    </div>
+                    
                     <div>
-                        <label htmlFor="accountName" className="block text-xs font-medium text-gray-300 mb-1">
-                            Account Name *
+                        <label htmlFor="notes" className="block text-xs font-medium text-gray-300 mb-1">
+                            Notes (Optional)
                         </label>
-                        <input
-                            type="text"
-                            name="accountName"
-                            id="accountName"
-                            required
-                            placeholder="e.g., John Doe"
+                        <textarea
+                            name="notes"
+                            id="notes"
+                            rows={2}
+                            placeholder="Add any notes about this account..."
                             className="block w-full rounded-md border-gray-600 bg-gray-700 text-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2"
                         />
                     </div>
 
-                    <div>
-                        <label htmlFor="email" className="block text-xs font-medium text-gray-300 mb-1">
-                            Email *
-                        </label>
-                        <input
-                            type="email"
-                            name="email"
-                            id="email"
-                            required
-                            placeholder="email@example.com"
-                            className="block w-full rounded-md border-gray-600 bg-gray-700 text-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2"
-                        />
-                    </div>
-
-                    <div>
-                        <label htmlFor="password" className="block text-xs font-medium text-gray-300 mb-1">
-                            Password *
-                        </label>
-                        <input
-                            type="text"
-                            name="password"
-                            id="password"
-                            required
-                            placeholder="Account password"
-                            className="block w-full rounded-md border-gray-600 bg-gray-700 text-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2"
-                        />
-                    </div>
-
-                    <div>
-                        <label htmlFor="browserType" className="block text-xs font-medium text-gray-300 mb-1">
-                            Browser Type *
-                        </label>
-                        <select
-                            name="browserType"
-                            id="browserType"
-                            required
-                            className="block w-full rounded-md border-gray-600 bg-gray-700 text-white text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2"
-                        >
-                            <option value="IX Browser">IX Browser</option>
-                            <option value="GoLogin">GoLogin</option>
-                            <option value="More Login">More Login</option>
-                        </select>
-                    </div>
-
-                    <div className="flex items-end">
+                    <div className="flex justify-end">
                         <button
                             type="submit"
-                            className="w-full rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+                            className="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
                         >
                             <svg className="inline-block mr-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                             Add Account
@@ -149,6 +179,7 @@ export default async function ManageAccountsPage() {
                                 <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Email</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Password</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Browser</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Type</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Assigned To</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Status</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Actions</th>
@@ -157,7 +188,7 @@ export default async function ManageAccountsPage() {
                         <tbody className="divide-y divide-gray-700 bg-gray-800">
                             {accounts.length === 0 ? (
                                 <tr>
-                                    <td colSpan={7} className="px-6 py-8 text-center text-gray-400">
+                                    <td colSpan={8} className="px-6 py-8 text-center text-gray-400">
                                         No accounts created yet. Create your first account above.
                                     </td>
                                 </tr>

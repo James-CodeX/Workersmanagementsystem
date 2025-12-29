@@ -192,6 +192,8 @@ export async function createAccount(formData: FormData) {
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
     const browserType = formData.get("browserType") as string;
+    const accountType = formData.get("accountType") as string || "Outlier";
+    const notes = formData.get("notes") as string || null;
 
     try {
         await prisma.workAccount.create({
@@ -200,6 +202,8 @@ export async function createAccount(formData: FormData) {
                 email,
                 password,
                 browserType,
+                accountType: accountType as any,
+                notes,
                 status: "Assigned",
                 employeeId: null,
             },
@@ -225,6 +229,8 @@ export async function editAccount(formData: FormData) {
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
     const browserType = formData.get("browserType") as string;
+    const accountType = formData.get("accountType") as string || "Outlier";
+    const notes = formData.get("notes") as string || null;
 
     try {
         await prisma.workAccount.update({
@@ -234,6 +240,8 @@ export async function editAccount(formData: FormData) {
                 email,
                 password,
                 browserType,
+                accountType: accountType as any,
+                notes,
             },
         });
         revalidatePath("/manager/dashboard");
