@@ -99,55 +99,55 @@ export default function AccountRow({ account, employees }: { account: Account; e
     if (isEditing) {
         return (
             <tr className="bg-gray-750">
-                <td className="px-6 py-4">
+                <td className="px-3 py-3">
                     <input
                         type="text"
                         value={editData.accountName}
                         onChange={(e) => setEditData({ ...editData, accountName: e.target.value })}
-                        className="w-full rounded border-gray-600 bg-gray-700 text-white text-sm px-2 py-1 focus:border-blue-500 focus:ring-blue-500"
+                        className="w-full rounded border-gray-600 bg-gray-700 text-white text-xs px-2 py-1 focus:border-blue-500 focus:ring-blue-500"
                         placeholder="Account Name"
                     />
                 </td>
-                <td className="px-6 py-4">
+                <td className="px-3 py-3">
                     <input
                         type="email"
                         value={editData.email}
                         onChange={(e) => setEditData({ ...editData, email: e.target.value })}
-                        className="w-full rounded border-gray-600 bg-gray-700 text-white text-sm px-2 py-1 focus:border-blue-500 focus:ring-blue-500"
+                        className="w-full rounded border-gray-600 bg-gray-700 text-white text-xs px-2 py-1 focus:border-blue-500 focus:ring-blue-500"
                         placeholder="Email"
                     />
                 </td>
-                <td className="px-6 py-4">
+                <td className="px-3 py-3">
                     <input
                         type="text"
                         value={editData.password}
                         onChange={(e) => setEditData({ ...editData, password: e.target.value })}
-                        className="w-full rounded border-gray-600 bg-gray-700 text-white text-sm px-2 py-1 focus:border-blue-500 focus:ring-blue-500"
+                        className="w-full rounded border-gray-600 bg-gray-700 text-white text-xs px-2 py-1 focus:border-blue-500 focus:ring-blue-500"
                         placeholder="Password"
                     />
                 </td>
-                <td className="px-6 py-4">
+                <td className="px-3 py-3">
                     <select
                         value={editData.browserType}
                         onChange={(e) => setEditData({ ...editData, browserType: e.target.value })}
-                        className="w-full rounded border-gray-600 bg-gray-700 text-white text-sm px-2 py-1 focus:border-blue-500 focus:ring-blue-500"
+                        className="w-full rounded border-gray-600 bg-gray-700 text-white text-xs px-2 py-1 focus:border-blue-500 focus:ring-blue-500"
                     >
                         <option value="IX Browser">IX Browser</option>
                         <option value="GoLogin">GoLogin</option>
                         <option value="More Login">More Login</option>
                     </select>
                 </td>
-                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-300">
+                <td className="px-3 py-3 text-xs text-gray-300">
                     {account.employee ? (
                         <span className="font-medium text-blue-400">{account.employee.username}</span>
                     ) : (
                         <span className="text-gray-500 italic">Unassigned</span>
                     )}
                 </td>
-                <td className="whitespace-nowrap px-6 py-4 text-sm">
+                <td className="px-3 py-3 text-xs">
                     {getStatusBadge(account.status, !!account.employee)}
                 </td>
-                <td className="whitespace-nowrap px-6 py-4 text-sm font-medium">
+                <td className="px-3 py-3 text-xs font-medium">
                     <form onSubmit={handleEdit} className="flex items-center gap-2">
                         <button
                             type="submit"
@@ -176,41 +176,45 @@ export default function AccountRow({ account, employees }: { account: Account; e
 
     return (
         <tr>
-            <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-white">
-                {account.accountName}
+            <td className="px-3 py-3 text-xs font-medium text-white">
+                <div className="truncate" title={account.accountName}>
+                    {account.accountName}
+                </div>
             </td>
-            <td className="px-6 py-4 text-sm text-gray-300">
-                <div className="max-w-xs truncate" title={account.email}>
+            <td className="px-3 py-3 text-xs text-gray-300">
+                <div className="truncate" title={account.email}>
                     {account.email}
                 </div>
             </td>
-            <td className="px-6 py-4 text-sm text-gray-300">
-                <div className="max-w-xs truncate" title={account.password}>
+            <td className="px-3 py-3 text-xs text-gray-300">
+                <div className="truncate font-mono" title={account.password}>
                     {account.password}
                 </div>
             </td>
-            <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-300">
-                {account.browserType}
+            <td className="px-3 py-3 text-xs text-gray-300">
+                <div className="truncate">
+                    {account.browserType}
+                </div>
             </td>
-            <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-300">
+            <td className="px-3 py-3 text-xs text-gray-300">
                 {account.employee ? (
-                    <span className="font-medium text-blue-400">{account.employee.username}</span>
+                    <span className="font-medium text-blue-400 truncate block">{account.employee.username}</span>
                 ) : (
                     <span className="text-gray-500 italic">Unassigned</span>
                 )}
             </td>
-            <td className="whitespace-nowrap px-6 py-4 text-sm">
+            <td className="px-3 py-3 text-xs">
                 {getStatusBadge(account.status, !!account.employee)}
             </td>
-            <td className="whitespace-nowrap px-6 py-4 text-sm font-medium">
-                <div className="flex items-center gap-2">
+            <td className="px-3 py-3 text-xs font-medium">
+                <div className="flex items-center gap-1.5">
                     {/* Edit */}
                     <button
                         onClick={() => setIsEditing(true)}
                         className="text-blue-400 hover:text-blue-300"
                         title="Edit account"
                     >
-                        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                         </svg>
                     </button>
@@ -220,12 +224,12 @@ export default function AccountRow({ account, employees }: { account: Account; e
                         <input type="hidden" name="accountId" value={account.id} />
                         <select
                             name="employeeId"
-                            className="rounded border-gray-600 bg-gray-700 text-white text-xs px-2 py-1 focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50"
+                            className="rounded border-gray-600 bg-gray-700 text-white text-xs px-1.5 py-1 focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50"
                             value={account.employeeId || ""}
                             disabled={isLoading}
                             onChange={(e) => (e.target.form as HTMLFormElement).requestSubmit()}
                         >
-                            <option value="">Unassign</option>
+                            <option value="">Assign...</option>
                             {employees.map((emp) => (
                                 <option key={emp.id} value={emp.id}>
                                     {emp.username}
@@ -241,9 +245,9 @@ export default function AccountRow({ account, employees }: { account: Account; e
                             <button
                                 type="submit"
                                 className="text-yellow-400 hover:text-yellow-300"
-                                title="Unassign from employee"
+                                title="Unassign"
                             >
-                                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6v1h12v-1a6 6 0 00-6-6zM21 12h-6" />
                                 </svg>
                             </button>
@@ -256,9 +260,9 @@ export default function AccountRow({ account, employees }: { account: Account; e
                         <button
                             type="submit"
                             className="text-red-400 hover:text-red-300"
-                            title="Delete account"
+                            title="Delete"
                         >
-                            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                             </svg>
                         </button>

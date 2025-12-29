@@ -2,35 +2,28 @@ import { prisma } from "@/lib/prisma";
 import ClaimActionButtons from "@/components/ClaimActionButtons";
 import Link from "next/link";
 import HistoryDropdown from "@/components/HistoryDropdown";
+import { Suspense } from "react";
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-export default async function ManagerDashboardPage() {
-    // Fetch all data in parallel
-    const [pendingClaims, allEmployees, allAccounts, pausedAccounts, leftAccounts] = await Promise.all([
-        prisma.taskClaim.findMany({
-            where: { status: "Pending" },
-            include: { employee: true },
-            orderBy: { submittedAt: "desc" },
-        }),
-        prisma.user.findMany({
-            where: { role: "EMPLOYEE" },
-            orderBy: { username: "asc" },
-        }),
-        prisma.workAccount.findMany({
-            where: {
-                employeeId: { not: null }
-            },
-            include: { employee: true },
-            orderBy: { assignedAt: "desc" },
-        }),
+// Separate async component for notifications
+async function NotificationsSection() {
+    const [pausedAccounts, leftAccounts] = await Promise.all([
         prisma.workAccount.findMany({
             where: { 
                 status: "Paused",
                 employeeId: { not: null }
             },
-            include: { employee: true },
+            select: {
+                id: true,
+                accountName: true,
+                employee: {
+                    select: {
+                        username: true
+                    }
+                }
+            },
             orderBy: { assignedAt: "desc" },
         }),
         prisma.workAccount.findMany({
@@ -38,12 +31,80 @@ export default async function ManagerDashboardPage() {
                 status: "Left",
                 employeeId: { not: null }
             },
-            include: { employee: true },
+            select: {
+                id: true,
+                accountName: true,
+                employee: {
+                    select: {
+                        username: true
+                    }
+                }
+            },
             orderBy: { assignedAt: "desc" },
         }),
     ]);
 
-    // Group pending claims by employee
+    if (pausedAccounts.length === 0 && leftAccounts.length === 0) {
+        return null;
+    }
+
+    return (
+        <div className="mt-6">
+            <h3 className="mb-3 text-sm font-medium text-gray-400">Notifications</h3>
+            <div className="grid gap-4 md:grid-cols-2">
+                {pausedAccounts.map((account) => (
+                    <div key={account.id} className="flex items-center rounded-md bg-yellow-50 p-4 text-yellow-800">
+                        <svg className="mr-3 h-5 w-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+                        <div>
+                            <span className="font-bold">{account.employee?.username}</span> has PAUSED the account <span className="font-bold">{account.accountName}</span>
+                        </div>
+                    </div>
+                ))}
+                {leftAccounts.map((account) => (
+                    <div key={account.id} className="flex items-center rounded-md bg-red-50 p-4 text-red-800">
+                        <svg className="mr-3 h-5 w-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+                        <div>
+                            <span className="font-bold">{account.employee?.username}</span> has LEFT the account <span className="font-bold">{account.accountName}</span>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+// Separate async component for pending claims
+async function PendingClaimsSection({ page = 1 }: { page?: number }) {
+    const pageSize = 20;
+    const skip = (page - 1) * pageSize;
+
+    const [pendingClaims, totalCount] = await Promise.all([
+        prisma.taskClaim.findMany({
+            where: { status: "Pending" },
+            select: {
+                id: true,
+                platform: true,
+                accountName: true,
+                taskExternalId: true,
+                timeSpentHours: true,
+                screenshot: true,
+                submittedAt: true,
+                employee: {
+                    select: {
+                        id: true,
+                        username: true
+                    }
+                }
+            },
+            orderBy: { submittedAt: "desc" },
+            take: pageSize,
+            skip: skip,
+        }),
+        prisma.taskClaim.count({
+            where: { status: "Pending" }
+        })
+    ]);
+
     const groupedClaims = pendingClaims.reduce((acc, claim) => {
         const username = claim.employee.username;
         if (!acc[username]) {
@@ -55,6 +116,159 @@ export default async function ManagerDashboardPage() {
         acc[username].claims.push(claim);
         return acc;
     }, {} as Record<string, { employee: any; claims: typeof pendingClaims }>);
+
+    return (
+        <div className="mt-8 space-y-6">
+            {Object.keys(groupedClaims).length > 0 && (
+                <div className="flex items-center justify-between">
+                    <p className="text-sm text-gray-400">
+                        Showing {skip + 1}-{Math.min(skip + pageSize, totalCount)} of {totalCount} claims
+                    </p>
+                </div>
+            )}
+
+            {Object.values(groupedClaims).map(({ employee, claims }) => (
+                <div key={employee.id} className="overflow-hidden rounded-lg border border-gray-700 bg-gray-900">
+                    <div className="flex items-center justify-between bg-white px-4 py-3">
+                        <div className="flex items-center">
+                            <span className="text-lg font-bold text-blue-600">{employee.username}</span>
+                        </div>
+                        <span className="rounded-full bg-gray-600 px-3 py-1 text-xs font-medium text-white">
+                            {claims.length} Pending
+                        </span>
+                    </div>
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-700">
+                            <thead className="bg-gray-800">
+                                <tr>
+                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Platform</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Account</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Task ID</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Time (Hrs)</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Proof</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Submitted</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-700 bg-gray-900">
+                                {claims.map((claim) => (
+                                    <tr key={claim.id}>
+                                        <td className="whitespace-nowrap px-6 py-4">
+                                            <span className="inline-flex items-center rounded bg-blue-900 px-2.5 py-0.5 text-xs font-medium text-blue-100">
+                                                {claim.platform}
+                                            </span>
+                                        </td>
+                                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-300">{claim.accountName}</td>
+                                        <td className="whitespace-nowrap px-6 py-4 text-sm text-pink-500 font-mono">{claim.taskExternalId}</td>
+                                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-300">{claim.timeSpentHours.toString()}</td>
+                                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-300">
+                                            {claim.screenshot && claim.screenshot !== "no-screenshot.png" ? (
+                                                <a href={claim.screenshot} target="_blank" rel="noopener noreferrer" className="h-10 w-10 bg-blue-700 rounded flex items-center justify-center text-xs hover:bg-blue-600 cursor-pointer">
+                                                    View
+                                                </a>
+                                            ) : (
+                                                <span className="text-gray-500">No Image</span>
+                                            )}
+                                        </td>
+                                        <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-300">
+                                            {new Date(claim.submittedAt).toLocaleDateString()}
+                                        </td>
+                                        <td className="whitespace-nowrap px-6 py-4 text-sm font-medium">
+                                            <ClaimActionButtons claimId={claim.id} />
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            ))}
+            {Object.keys(groupedClaims).length === 0 && (
+                <div className="text-center py-10 text-gray-500">No pending claims.</div>
+            )}
+        </div>
+    );
+}
+
+// Separate async component for accounts overview
+async function AccountsOverviewSection() {
+    const allAccounts = await prisma.workAccount.findMany({
+        where: {
+            employeeId: { not: null }
+        },
+        select: {
+            id: true,
+            accountName: true,
+            browserType: true,
+            status: true,
+            assignedAt: true,
+            employee: {
+                select: {
+                    username: true
+                }
+            }
+        },
+        orderBy: { assignedAt: "desc" },
+        take: 50, // Limit to recent 50
+    });
+
+    return (
+        <div className="rounded-lg bg-gray-800 shadow-lg">
+            <div className="border-b border-gray-700 px-6 py-4">
+                <h3 className="text-lg font-medium leading-6 text-white">Assigned Accounts Overview (Recent 50)</h3>
+            </div>
+            <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-700">
+                    <thead className="bg-gray-900">
+                        <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Employee</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Account Name</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Browser</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Status</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Assigned At</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-700 bg-gray-800">
+                        {allAccounts.map((account) => (
+                            <tr key={account.id}>
+                                <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-white">
+                                    {account.employee?.username || "Unassigned"}
+                                </td>
+                                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-300">{account.accountName}</td>
+                                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-300">{account.browserType}</td>
+                                <td className="whitespace-nowrap px-6 py-4 text-sm">
+                                    {account.status === 'Accepted' && <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">Accepted</span>}
+                                    {account.status === 'Paused' && <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">Paused</span>}
+                                    {account.status === 'Left' && <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">Left</span>}
+                                    {account.status === 'Assigned' && <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">Assigned</span>}
+                                </td>
+                                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-300">
+                                    {new Date(account.assignedAt).toLocaleDateString()}
+                                </td>
+                            </tr>
+                        ))}
+                        {allAccounts.length === 0 && (
+                            <tr>
+                                <td colSpan={5} className="px-6 py-4 text-center text-gray-500">No accounts assigned.</td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+}
+
+export default async function ManagerDashboardPage() {
+    // Fetch only employees list immediately (lightweight)
+    const allEmployees = await prisma.user.findMany({
+        where: { role: "EMPLOYEE" },
+        select: {
+            id: true,
+            username: true
+        },
+        orderBy: { username: "asc" },
+    });
 
     return (
         <div className="space-y-6">
@@ -97,139 +311,40 @@ export default async function ManagerDashboardPage() {
                     </div>
                 </div>
 
-                {/* Notifications */}
-                {(pausedAccounts.length > 0 || leftAccounts.length > 0) && (
-                    <div className="mt-6">
-                        <h3 className="mb-3 text-sm font-medium text-gray-400">Notifications</h3>
-                        <div className="grid gap-4 md:grid-cols-2">
-                            {pausedAccounts.map((account) => (
-                                <div key={account.id} className="flex items-center rounded-md bg-yellow-50 p-4 text-yellow-800">
-                                    <svg className="mr-3 h-5 w-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
-                                    <div>
-                                        <span className="font-bold">{account.employee?.username}</span> has PAUSED the account <span className="font-bold">{account.accountName}</span> (ID: {account.id})
-                                    </div>
-                                </div>
-                            ))}
-                            {leftAccounts.map((account) => (
-                                <div key={account.id} className="flex items-center rounded-md bg-red-50 p-4 text-red-800">
-                                    <svg className="mr-3 h-5 w-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
-                                    <div>
-                                        <span className="font-bold">{account.employee?.username}</span> has LEFT the account <span className="font-bold">{account.accountName}</span>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
+                {/* Notifications - Streamed */}
+                <Suspense fallback={
+                    <div className="mt-6 animate-pulse">
+                        <div className="h-4 w-32 bg-gray-700 rounded mb-3"></div>
+                        <div className="h-16 bg-gray-700 rounded"></div>
                     </div>
-                )}
+                }>
+                    <NotificationsSection />
+                </Suspense>
 
-                {/* Grouped Claims */}
-                <div className="mt-8 space-y-6">
-                    {Object.values(groupedClaims).map(({ employee, claims }) => (
-                        <div key={employee.id} className="overflow-hidden rounded-lg border border-gray-700 bg-gray-900">
-                            <div className="flex items-center justify-between bg-white px-4 py-3">
-                                <div className="flex items-center">
-                                    <span className="text-lg font-bold text-blue-600">{employee.username}</span>
-                                </div>
-                                <span className="rounded-full bg-gray-600 px-3 py-1 text-xs font-medium text-white">
-                                    {claims.length} Pending
-                                </span>
-                            </div>
-                            <div className="overflow-x-auto">
-                                <table className="min-w-full divide-y divide-gray-700">
-                                    <thead className="bg-gray-800">
-                                        <tr>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Platform</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Account</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Task ID</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Time (Hrs)</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Proof</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Submitted</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-700 bg-gray-900">
-                                        {claims.map((claim) => (
-                                            <tr key={claim.id}>
-                                                <td className="whitespace-nowrap px-6 py-4">
-                                                    <span className="inline-flex items-center rounded bg-blue-900 px-2.5 py-0.5 text-xs font-medium text-blue-100">
-                                                        {claim.platform}
-                                                    </span>
-                                                </td>
-                                                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-300">{claim.accountName}</td>
-                                                <td className="whitespace-nowrap px-6 py-4 text-sm text-pink-500 font-mono">{claim.taskExternalId}</td>
-                                                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-300">{claim.timeSpentHours.toString()}</td>
-                                                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-300">
-                                                    {claim.screenshot && claim.screenshot !== "no-screenshot.png" ? (
-                                                        <a href={claim.screenshot} target="_blank" rel="noopener noreferrer" className="h-10 w-10 bg-blue-700 rounded flex items-center justify-center text-xs hover:bg-blue-600 cursor-pointer">
-                                                            View
-                                                        </a>
-                                                    ) : (
-                                                        <span className="text-gray-500">No Image</span>
-                                                    )}
-                                                </td>
-                                                <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-300">
-                                                    {new Date(claim.submittedAt).toLocaleDateString()}
-                                                </td>
-                                                <td className="whitespace-nowrap px-6 py-4 text-sm font-medium">
-                                                    <ClaimActionButtons claimId={claim.id} />
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    ))}
-                    {Object.keys(groupedClaims).length === 0 && (
-                        <div className="text-center py-10 text-gray-500">No pending claims.</div>
-                    )}
-                </div>
+                {/* Pending Claims - Streamed */}
+                <Suspense fallback={
+                    <div className="mt-8 space-y-4 animate-pulse">
+                        <div className="h-48 bg-gray-700 rounded"></div>
+                        <div className="h-48 bg-gray-700 rounded"></div>
+                    </div>
+                }>
+                    <PendingClaimsSection />
+                </Suspense>
             </div>
 
-            {/* Assigned Accounts Overview */}
-            <div className="rounded-lg bg-gray-800 shadow-lg">
-                <div className="border-b border-gray-700 px-6 py-4">
-                    <h3 className="text-lg font-medium leading-6 text-white">Assigned Accounts Overview</h3>
+            {/* Assigned Accounts Overview - Streamed */}
+            <Suspense fallback={
+                <div className="rounded-lg bg-gray-800 p-6 shadow-lg animate-pulse">
+                    <div className="h-6 w-48 bg-gray-700 rounded mb-4"></div>
+                    <div className="space-y-3">
+                        <div className="h-12 bg-gray-700 rounded"></div>
+                        <div className="h-12 bg-gray-700 rounded"></div>
+                        <div className="h-12 bg-gray-700 rounded"></div>
+                    </div>
                 </div>
-                <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-700">
-                        <thead className="bg-gray-900">
-                            <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Employee</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Account Name</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Browser</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Status</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-400">Assigned At</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-700 bg-gray-800">
-                            {allAccounts.map((account) => (
-                                <tr key={account.id}>
-                                    <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-white">
-                                        {account.employee?.username || "Unassigned"}
-                                    </td>
-                                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-300">{account.accountName}</td>
-                                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-300">{account.browserType}</td>
-                                    <td className="whitespace-nowrap px-6 py-4 text-sm">
-                                        {account.status === 'Accepted' && <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">Accepted</span>}
-                                        {account.status === 'Paused' && <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">Paused</span>}
-                                        {account.status === 'Left' && <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">Left</span>}
-                                        {account.status === 'Assigned' && <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">Assigned</span>}
-                                    </td>
-                                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-300">
-                                        {new Date(account.assignedAt).toLocaleDateString()}
-                                    </td>
-                                </tr>
-                            ))}
-                            {allAccounts.length === 0 && (
-                                <tr>
-                                    <td colSpan={5} className="px-6 py-4 text-center text-gray-500">No accounts assigned.</td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+            }>
+                <AccountsOverviewSection />
+            </Suspense>
         </div>
     );
 }
