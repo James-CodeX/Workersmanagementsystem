@@ -29,14 +29,21 @@ export default async function EmployeeAccountsPage() {
         orderBy: { assignedAt: "desc" },
     });
 
+    // Convert Decimal fields to strings for client components
+    const serializedAccounts = accounts.map(account => ({
+        ...account,
+        initialEarnings: account.initialEarnings ? account.initialEarnings.toString() : null,
+        finalEarnings: account.finalEarnings ? account.finalEarnings.toString() : null,
+    }));
+
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold text-white">My Assigned Accounts</h2>
-                <span className="text-sm text-gray-400">{accounts.length} account(s)</span>
+                <span className="text-sm text-gray-400">{serializedAccounts.length} account(s)</span>
             </div>
 
-            {accounts.length === 0 ? (
+            {serializedAccounts.length === 0 ? (
                 <div className="bg-gray-800 rounded-lg border border-gray-700 p-12 text-center">
                     <svg className="mx-auto h-12 w-12 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -46,7 +53,7 @@ export default async function EmployeeAccountsPage() {
                 </div>
             ) : (
                 <div className="grid gap-4 md:grid-cols-2">
-                    {accounts.map((account) => (
+                    {serializedAccounts.map((account) => (
                         <div key={account.id} className="bg-gray-800 rounded-lg border border-gray-700 p-6 hover:border-gray-600 transition">
                             <div className="flex items-start justify-between mb-4">
                                 <div>
